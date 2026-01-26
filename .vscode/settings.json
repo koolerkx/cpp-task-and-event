@@ -1,0 +1,12 @@
+{
+    "cmake.debugConfig": {
+        "console": "internalConsole",
+        "logging": {
+            "moduleLoad": false
+        },
+        "cwd": "${workspaceFolder}",
+    },
+    "cmake.outputLogEncoding": "utf8",
+    "cmake.copyCompileCommands": "${workspaceFolder}/compile_commands.json"
+
+}

@@ -1,0 +1,38 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "type": "cmake",
+            "label": "CMake: build (setting)",
+            "command": "build",
+            "group": "build",
+            "problemMatcher": [],
+            "detail": "CMake build task"
+        },
+        {
+            "type": "cmake",
+            "label": "CMake: clean rebuild (setting)",
+            "command": "cleanRebuild",
+            "group": "build",
+            "problemMatcher": [],
+            "detail": "CMake clean rebuild task"
+        },
+        {
+            "label": "Remove out dir",
+            "type": "shell",
+            "windows": {
+                "command": "powershell",
+                "args": [
+                    "-Command",
+                    "if (Test-Path '${workspaceFolder}/out') { Remove-Item -Recurse -Force '${workspaceFolder}/out' }"
+                ]
+            },
+            "presentation": {
+                "reveal": "silent",
+                "panel": "shared"
+            }
+        }
+    ]
+}
