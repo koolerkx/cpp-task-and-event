@@ -30,6 +30,9 @@ endfunction()
 
 add_executable(app
   main.cpp
+  src/ThreadPool.hpp
+  src/Task.hpp
+  src/Demo.cpp
 )
 
 set_msvc_runtime(app)
