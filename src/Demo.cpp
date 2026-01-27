@@ -18,7 +18,9 @@ void RunBasicDemo() {
   task2->TrySchedule(pool);
   task3->TrySchedule(pool);
 
-  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  task1->Wait();
+  task2->Wait();
+  task3->Wait();
   std::cout << std::endl;
 }
 
@@ -41,7 +43,7 @@ void RunDAGDemo() {
   taskA->TrySchedule(pool);
   taskB->TrySchedule(pool);
 
-  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  taskC->Wait();
   std::cout << std::endl;
 }
 
@@ -79,7 +81,7 @@ void RunComplexDAGDemo() {
   std::cout << "Scheduling root task A...\n";
   taskA->TrySchedule(pool);
 
-  std::this_thread::sleep_for(std::chrono::milliseconds(200));
+  taskE->Wait();
   std::cout << std::endl;
 }
 
