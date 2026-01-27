@@ -1,8 +1,8 @@
 void RunAllDemo();
 void RunAllCoroutineDemos();
+void RunAllReturnValueDemos();
 
 int main() {
-    RunAllDemo();
-    RunAllCoroutineDemos();
+    RunAllReturnValueDemos();
     return 0;
 }

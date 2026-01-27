@@ -1,25 +1,18 @@
-#include "Task.hpp"
-#include "ThreadPool.hpp"
 #include <chrono>
 #include <iostream>
 #include <thread>
+
+#include "Task.hpp"
+#include "ThreadPool.hpp"
+
 
 void RunBasicDemo() {
   std::cout << "=== Basic Task Execution Demo ===" << std::endl;
 
   ThreadPool pool;
-  auto task1 = std::make_shared<Task>([] {
-    std::cout << "[Thread " << std::this_thread::get_id()
-              << "] Task 1 executed\n";
-  });
-  auto task2 = std::make_shared<Task>([] {
-    std::cout << "[Thread " << std::this_thread::get_id()
-              << "] Task 2 executed\n";
-  });
-  auto task3 = std::make_shared<Task>([] {
-    std::cout << "[Thread " << std::this_thread::get_id()
-              << "] Task 3 executed\n";
-  });
+  auto task1 = std::make_shared<Task<void>>([] { std::cout << "[Thread " << std::this_thread::get_id() << "] Task 1 executed\n"; });
+  auto task2 = std::make_shared<Task<void>>([] { std::cout << "[Thread " << std::this_thread::get_id() << "] Task 2 executed\n"; });
+  auto task3 = std::make_shared<Task<void>>([] { std::cout << "[Thread " << std::this_thread::get_id() << "] Task 3 executed\n"; });
 
   task1->TrySchedule(pool);
   task2->TrySchedule(pool);
@@ -35,18 +28,11 @@ void RunDAGDemo() {
 
   ThreadPool pool;
 
-  auto taskA = std::make_shared<Task>([] {
-    std::cout << "[Thread " << std::this_thread::get_id()
-              << "] Task A: Loading Mesh...\n";
-  });
-  auto taskB = std::make_shared<Task>([] {
-    std::cout << "[Thread " << std::this_thread::get_id()
-              << "] Task B: Loading Texture...\n";
-  });
-  auto taskC = std::make_shared<Task>([] {
-    std::cout << "[Thread " << std::this_thread::get_id()
-              << "] Task C: Initializing Material (requires A and B)\n";
-  });
+  auto taskA = std::make_shared<Task<void>>([] { std::cout << "[Thread " << std::this_thread::get_id() << "] Task A: Loading Mesh...\n"; });
+  auto taskB =
+    std::make_shared<Task<void>>([] { std::cout << "[Thread " << std::this_thread::get_id() << "] Task B: Loading Texture...\n"; });
+  auto taskC = std::make_shared<Task<void>>(
+    [] { std::cout << "[Thread " << std::this_thread::get_id() << "] Task C: Initializing Material (requires A and B)\n"; });
 
   taskA->Then(taskC);
   taskB->Then(taskC);
@@ -72,27 +58,17 @@ void RunComplexDAGDemo() {
 
   ThreadPool pool;
 
-  auto taskA = std::make_shared<Task>([] {
-    std::cout << "[Thread " << std::this_thread::get_id()
-              << "] Task A: Initialize Engine\n";
+  auto taskA = std::make_shared<Task<void>>([] {
+    std::cout << "[Thread " << std::this_thread::get_id() << "] Task A: Initialize Engine\n";
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
   });
-  auto taskB = std::make_shared<Task>([] {
-    std::cout << "[Thread " << std::this_thread::get_id()
-              << "] Task B: Load Scene Graph\n";
-  });
-  auto taskC = std::make_shared<Task>([] {
-    std::cout << "[Thread " << std::this_thread::get_id()
-              << "] Task C: Load Shaders\n";
-  });
-  auto taskD = std::make_shared<Task>([] {
-    std::cout << "[Thread " << std::this_thread::get_id()
-              << "] Task D: Build Render Pipeline (requires B and C)\n";
-  });
-  auto taskE = std::make_shared<Task>([] {
-    std::cout << "[Thread " << std::this_thread::get_id()
-              << "] Task E: Start Render Loop (requires D)\n";
-  });
+  auto taskB =
+    std::make_shared<Task<void>>([] { std::cout << "[Thread " << std::this_thread::get_id() << "] Task B: Load Scene Graph\n"; });
+  auto taskC = std::make_shared<Task<void>>([] { std::cout << "[Thread " << std::this_thread::get_id() << "] Task C: Load Shaders\n"; });
+  auto taskD = std::make_shared<Task<void>>(
+    [] { std::cout << "[Thread " << std::this_thread::get_id() << "] Task D: Build Render Pipeline (requires B and C)\n"; });
+  auto taskE = std::make_shared<Task<void>>(
+    [] { std::cout << "[Thread " << std::this_thread::get_id() << "] Task E: Start Render Loop (requires D)\n"; });
 
   taskA->Then(taskB);
   taskA->Then(taskC);
