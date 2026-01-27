@@ -33,6 +33,9 @@ add_executable(app
   src/ThreadPool.hpp
   src/Task.hpp
   src/Demo.cpp
+  src/CoroTask.hpp
+  src/TaskAwaiter.hpp
+  src/CoroutineDemo.cpp
 )
 
 set_msvc_runtime(app)

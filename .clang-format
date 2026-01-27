@@ -1,0 +1,22 @@
+---
+Language: Cpp
+BasedOnStyle: Google
+
+ColumnLimit: 140
+IncludeBlocks: Regroup
+
+FixNamespaceComments: true
+EmptyLineBeforeAccessModifier: Always
+
+ContinuationIndentWidth: 2
+UseTab: Never
+
+AllowShortLoopsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: None
+
+InsertNewlineAtEOF: true
+
+BinPackParameters: false
+BinPackArguments: false
+AlignAfterOpenBracket: DontAlign
+AllowAllParametersOfDeclarationOnNextLine: true

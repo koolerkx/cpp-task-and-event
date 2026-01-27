@@ -8,7 +8,7 @@
 #include <vector>
 
 class ThreadPool {
-public:
+ public:
   explicit ThreadPool(size_t threads = GetDefaultThreadCount()) {
     for (size_t i = 0; i < threads; ++i) {
       workers.emplace_back(std::thread([this] {
@@ -46,21 +46,20 @@ public:
       stop = true;
     }
     condition.notify_all();
-    for (std::thread &worker : workers) {
+    for (std::thread& worker : workers) {
       worker.join();
     }
   }
 
-  ThreadPool(const ThreadPool &) = delete;
-  ThreadPool &operator=(const ThreadPool &) = delete;
-  ThreadPool(ThreadPool &&) = delete;
-  ThreadPool &operator=(ThreadPool &&) = delete;
+  ThreadPool(const ThreadPool&) = delete;
+  ThreadPool& operator=(const ThreadPool&) = delete;
+  ThreadPool(ThreadPool&&) = delete;
+  ThreadPool& operator=(ThreadPool&&) = delete;
 
-private:
+ private:
   static size_t GetDefaultThreadCount() {
     auto core = std::thread::hardware_concurrency();
-    if (core == 0)
-      return 1;
+    if (core == 0) return 1;
     return std::max(size_t{1}, static_cast<size_t>(core - 1));
   }
 
