@@ -6,6 +6,8 @@
 template <typename T = void>
 struct CoroTask {
   struct promise_type {
+    std::exception_ptr exception_ = nullptr;
+
     CoroTask get_return_object() {
       return CoroTask{std::coroutine_handle<promise_type>::from_promise(*this)};
     }
@@ -19,8 +21,9 @@ struct CoroTask {
 
     void return_void() {
     }
+
     void unhandled_exception() {
-      std::terminate();
+      exception_ = std::current_exception();
     }
   };
 
@@ -52,6 +55,12 @@ struct CoroTask {
   ~CoroTask() {
     if (handle) {
       handle.destroy();
+    }
+  }
+
+  void rethrow_if_exception() const {
+    if (handle && handle.promise().exception_) {
+      std::rethrow_exception(handle.promise().exception_);
     }
   }
 };

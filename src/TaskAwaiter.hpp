@@ -56,5 +56,8 @@ struct TaskAwaiter<void> {
   }
 
   void await_resume() {
+    if (task->exception_) {
+      std::rethrow_exception(task->exception_);
+    }
   }
 };

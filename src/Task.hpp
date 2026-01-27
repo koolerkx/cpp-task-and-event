@@ -2,6 +2,7 @@
 
 #include <atomic>
 #include <condition_variable>
+#include <exception>
 #include <functional>
 #include <memory>
 #include <mutex>
@@ -55,12 +56,15 @@ class TaskBase {
   std::atomic<int> predecessor_count_{0};
   std::atomic<bool> is_done_{false};
   std::atomic<bool> is_scheduled_{false};
+  std::exception_ptr exception_ = nullptr;
   mutable std::mutex wait_mutex_;
   mutable std::condition_variable wait_cv_;
   std::vector<std::shared_ptr<Task<void>>> successors_void_;
 
   template <typename U>
   friend class Task;
+  template <typename U>
+  friend struct TaskAwaiter;
 };
 
 // Specialization for Task<void> must be defined first
@@ -86,8 +90,12 @@ class Task<void> : public TaskBase,
   void Execute(ThreadPool& pool) override {
     auto self = shared_from_this();
     pool.Enqueue([self, &pool]() {
-      if (self->callback_) {
-        self->callback_();
+      try {
+        if (self->callback_) {
+          self->callback_();
+        }
+      } catch (...) {
+        self->exception_ = std::current_exception();
       }
       self->NotifyFinished();
       self->NotifySuccessors(pool);
@@ -122,6 +130,9 @@ class Task : public TaskBase,
   }
 
   T GetResult() {
+    if (exception_) {
+      std::rethrow_exception(exception_);
+    }
     return std::move(*result_);
   }
 
@@ -134,8 +145,12 @@ class Task : public TaskBase,
   void Execute(ThreadPool& pool) override {
     auto self = this->shared_from_this();
     pool.Enqueue([self, &pool]() {
-      if (self->callback_) {
-        self->result_ = self->callback_();
+      try {
+        if (self->callback_) {
+          self->result_ = self->callback_();
+        }
+      } catch (...) {
+        self->exception_ = std::current_exception();
       }
       self->NotifyFinished();
       self->NotifySuccessors(pool);

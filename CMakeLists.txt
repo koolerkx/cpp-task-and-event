@@ -37,6 +37,7 @@ add_executable(app
   src/TaskAwaiter.hpp
   src/CoroutineDemo.cpp
   src/ReturnValueDemo.cpp
+  src/ExceptionHandlingDemo.cpp
 )
 
 set_msvc_runtime(app)
