@@ -18,7 +18,7 @@ struct TaskAwaiter {
   void await_suspend(std::coroutine_handle<> awaiting_coro) {
     auto resumption = std::make_shared<Task<void>>([awaiting_coro]() { awaiting_coro.resume(); });
 
-    task->Then(resumption);
+    task->Finally(resumption);
 
     if (task->IsDone()) {
       resumption->OnPredecessorFinished(pool);
@@ -46,7 +46,7 @@ struct TaskAwaiter<void> {
   void await_suspend(std::coroutine_handle<> awaiting_coro) {
     auto resumption = std::make_shared<Task<void>>([awaiting_coro]() { awaiting_coro.resume(); });
 
-    task->Then(resumption);
+    task->Finally(resumption);
 
     if (task->IsDone()) {
       resumption->OnPredecessorFinished(pool);

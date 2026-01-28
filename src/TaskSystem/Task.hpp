@@ -82,14 +82,16 @@ class Task<void> : public TaskBase, public std::enable_shared_from_this<Task<voi
   explicit Task(std::function<void()> callback) : callback_(std::move(callback)) {
   }
 
-  void Then(std::shared_ptr<Task<void>> next) {
+  std::shared_ptr<Task<void>> Finally(std::shared_ptr<Task<void>> next) {
     successors_unconditional_.push_back(next);
     next->predecessor_count_.fetch_add(1, std::memory_order_relaxed);
+    return next;
   }
 
-  void ThenSuccess(std::shared_ptr<Task<void>> next) {
+  std::shared_ptr<Task<void>> Then(std::shared_ptr<Task<void>> next) {
     successors_conditional_.push_back(next);
     next->predecessor_count_.fetch_add(1, std::memory_order_relaxed);
+    return next;
   }
 
   Task(const Task&) = delete;
@@ -138,24 +140,28 @@ class Task : public TaskBase, public std::enable_shared_from_this<Task<T>> {
   explicit Task(std::function<T()> callback) : callback_(std::move(callback)) {
   }
 
-  void Then(std::shared_ptr<Task<T>> next) {
+  std::shared_ptr<Task<T>> Finally(std::shared_ptr<Task<T>> next) {
     successors_t_unconditional_.push_back(next);
     next->predecessor_count_.fetch_add(1, std::memory_order_relaxed);
+    return next;
   }
 
-  void Then(std::shared_ptr<Task<void>> next) {
+  std::shared_ptr<Task<void>> Finally(std::shared_ptr<Task<void>> next) {
     successors_unconditional_.push_back(next);
     next->predecessor_count_.fetch_add(1, std::memory_order_relaxed);
+    return next;
   }
 
-  void ThenSuccess(std::shared_ptr<Task<T>> next) {
+  std::shared_ptr<Task<T>> Then(std::shared_ptr<Task<T>> next) {
     successors_t_conditional_.push_back(next);
     next->predecessor_count_.fetch_add(1, std::memory_order_relaxed);
+    return next;
   }
 
-  void ThenSuccess(std::shared_ptr<Task<void>> next) {
+  std::shared_ptr<Task<void>> Then(std::shared_ptr<Task<void>> next) {
     successors_conditional_.push_back(next);
     next->predecessor_count_.fetch_add(1, std::memory_order_relaxed);
+    return next;
   }
 
   T GetResult() {

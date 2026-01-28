@@ -243,8 +243,8 @@ CoroTask<void> DAGCancellationDemo(ThreadPool& pool) {
 
   auto taskC = std::make_shared<Task<void>>([] { std::cout << "[Task C] Final step\n"; });
 
-  taskA->Then(taskC);
-  taskB->Then(taskC);
+  taskA->Finally(taskC);
+  taskB->Finally(taskC);
 
   std::this_thread::sleep_for(5ms);
   std::cout << "[Main] Cancelling Task B BEFORE it starts...\n";

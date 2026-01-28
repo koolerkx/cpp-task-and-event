@@ -30,8 +30,8 @@ void TestBasicSuccess() {
     return 200;
   });
 
-  taskA->ThenSuccess(taskB);
-  taskB->ThenSuccess(taskC);
+  taskA->Then(taskB);
+  taskB->Then(taskC);
 
   taskA->TrySchedule(pool);
   taskC->Wait();
@@ -64,8 +64,8 @@ void TestExceptionPropagation() {
     return 200;
   });
 
-  taskA->ThenSuccess(taskB);
-  taskB->ThenSuccess(taskC);
+  taskA->Then(taskB);
+  taskB->Then(taskC);
 
   taskA->TrySchedule(pool);
   taskC->Wait();
@@ -104,8 +104,8 @@ void TestMixedSemantics() {
     return 200;
   });
 
-  taskA->Then(taskB);
-  taskA->ThenSuccess(taskC);
+  taskA->Finally(taskB);
+  taskA->Then(taskC);
 
   taskA->TrySchedule(pool);
   taskB->Wait();
@@ -142,8 +142,8 @@ void TestMultiplePredecessors() {
     return 200;
   });
 
-  taskA->ThenSuccess(taskC);
-  taskB->ThenSuccess(taskC);
+  taskA->Then(taskC);
+  taskB->Then(taskC);
 
   taskA->TrySchedule(pool);
   taskB->TrySchedule(pool);
@@ -178,8 +178,8 @@ void TestVoidTaskPropagation() {
     execution_log += "C ";
   });
 
-  taskA->ThenSuccess(taskB);
-  taskB->ThenSuccess(taskC);
+  taskA->Then(taskB);
+  taskB->Then(taskC);
 
   taskA->TrySchedule(pool);
   taskC->Wait();
@@ -223,10 +223,10 @@ void TestLongChain() {
     return 5;
   });
 
-  task1->ThenSuccess(task2);
-  task2->ThenSuccess(task3);
-  task3->ThenSuccess(task4);
-  task4->ThenSuccess(task5);
+  task1->Then(task2);
+  task2->Then(task3);
+  task3->Then(task4);
+  task4->Then(task5);
 
   task1->TrySchedule(pool);
   task5->Wait();
@@ -272,10 +272,10 @@ void TestLongChainWithFailure() {
     return 5;
   });
 
-  task1->ThenSuccess(task2);
-  task2->ThenSuccess(task3);
-  task3->ThenSuccess(task4);
-  task4->ThenSuccess(task5);
+  task1->Then(task2);
+  task2->Then(task3);
+  task3->Then(task4);
+  task4->Then(task5);
 
   task1->TrySchedule(pool);
   task5->Wait();

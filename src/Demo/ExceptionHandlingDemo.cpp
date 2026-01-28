@@ -84,8 +84,8 @@ CoroTask<void> DAGExceptionPropagationDemo(ThreadPool& pool) {
 
   auto taskC = std::make_shared<Task<void>>([] { std::cout << "[Stage C] This should still run\n"; });
 
-  taskA->Then(taskC);
-  taskB->Then(taskC);
+  taskA->Finally(taskC);
+  taskB->Finally(taskC);
 
   co_await TaskAwaiter<void>{taskA, pool};
   std::cout << "Task A completed\n";

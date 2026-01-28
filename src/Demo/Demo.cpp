@@ -36,8 +36,8 @@ void RunDAGDemo() {
   auto taskC = std::make_shared<Task<void>>(
     [] { std::cout << "[Thread " << std::this_thread::get_id() << "] Task C: Initializing Material (requires A and B)\n"; });
 
-  taskA->Then(taskC);
-  taskB->Then(taskC);
+  taskA->Finally(taskC);
+  taskB->Finally(taskC);
 
   std::cout << "Scheduling tasks A and B...\n";
   taskA->TrySchedule(pool);
@@ -72,11 +72,11 @@ void RunComplexDAGDemo() {
   auto taskE = std::make_shared<Task<void>>(
     [] { std::cout << "[Thread " << std::this_thread::get_id() << "] Task E: Start Render Loop (requires D)\n"; });
 
-  taskA->Then(taskB);
-  taskA->Then(taskC);
-  taskB->Then(taskD);
-  taskC->Then(taskD);
-  taskD->Then(taskE);
+  taskA->Finally(taskB);
+  taskA->Finally(taskC);
+  taskB->Finally(taskD);
+  taskC->Finally(taskD);
+  taskD->Finally(taskE);
 
   std::cout << "Scheduling root task A...\n";
   taskA->TrySchedule(pool);
