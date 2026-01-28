@@ -129,26 +129,26 @@ void RunAllCoroutineDemos() {
     std::cout << "=== Simple Await Demo ===\n";
     ThreadPool pool;
     auto coro = SimpleAwaitDemo(pool);
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    coro.Wait();
     std::cout << std::endl;
   }
 
   {
     ThreadPool pool;
     auto coro = SequentialAwaitDemo(pool);
-    std::this_thread::sleep_for(std::chrono::milliseconds(300));
+    coro.Wait();
   }
 
   {
     ThreadPool pool;
     auto coro = ParallelAwaitDemo(pool);
-    std::this_thread::sleep_for(std::chrono::milliseconds(400));
+    coro.Wait();
   }
 
   {
     ThreadPool pool;
     auto coro = MixedDemo(pool);
-    std::this_thread::sleep_for(std::chrono::milliseconds(400));
+    coro.Wait();
   }
 
   std::cout << "\n=== All coroutine demos completed ===" << std::endl;

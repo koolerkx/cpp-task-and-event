@@ -279,43 +279,43 @@ void RunAllCancellationDemos() {
   {
     ThreadPool pool;
     auto coro = BasicCancellationDemo(pool);
-    std::this_thread::sleep_for(300ms);
+    coro.Wait();
   }
 
   {
     ThreadPool pool;
     auto coro = TimeoutDemo(pool);
-    std::this_thread::sleep_for(1500ms);
+    coro.Wait();
   }
 
   {
     ThreadPool pool;
     auto coro = PollingCancellationDemo(pool);
-    std::this_thread::sleep_for(500ms);
+    coro.Wait();
   }
 
   {
     ThreadPool pool;
     auto coro = SuccessfulTimeoutDemo(pool);
-    std::this_thread::sleep_for(500ms);
+    coro.Wait();
   }
 
   {
     ThreadPool pool;
     auto coro = SharedCancellationDemo(pool);
-    std::this_thread::sleep_for(500ms);
+    coro.Wait();
   }
 
   {
     ThreadPool pool;
     auto coro = CancellationCallbackDemo(pool);
-    std::this_thread::sleep_for(300ms);
+    coro.Wait();
   }
 
   {
     ThreadPool pool;
     auto coro = DAGCancellationDemo(pool);
-    std::this_thread::sleep_for(500ms);
+    coro.Wait();
   }
 
   std::cout << "=== All cancellation demos completed ===\n";

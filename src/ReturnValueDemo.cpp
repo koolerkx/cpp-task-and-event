@@ -190,37 +190,37 @@ void RunAllReturnValueDemos() {
   {
     ThreadPool pool;
     auto coro = BasicIntReturnDemo(pool);
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    coro.Wait();
   }
 
   {
     ThreadPool pool;
     auto coro = StringReturnDemo(pool);
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    coro.Wait();
   }
 
   {
     ThreadPool pool;
     auto coro = CustomStructReturnDemo(pool);
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    coro.Wait();
   }
 
   {
     ThreadPool pool;
     auto coro = DataPipelineDemo(pool);
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    coro.Wait();
   }
 
   {
     ThreadPool pool;
     auto coro = ParallelMultiTypeDemo(pool);
-    std::this_thread::sleep_for(std::chrono::milliseconds(300));
+    coro.Wait();
   }
 
   {
     ThreadPool pool;
     auto coro = MixedVoidAndValueDemo(pool);
-    std::this_thread::sleep_for(std::chrono::milliseconds(300));
+    coro.Wait();
   }
 
   std::cout << "=== All return value demos completed ===\n";

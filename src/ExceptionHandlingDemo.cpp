@@ -183,37 +183,37 @@ void RunAllExceptionHandlingDemos() {
   {
     ThreadPool pool;
     auto coro = BasicVoidExceptionDemo(pool);
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    coro.Wait();
   }
 
   {
     ThreadPool pool;
     auto coro = IntReturnExceptionDemo(pool);
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    coro.Wait();
   }
 
   {
     ThreadPool pool;
     auto coro = CustomExceptionDemo(pool);
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    coro.Wait();
   }
 
   {
     ThreadPool pool;
     auto coro = DAGExceptionPropagationDemo(pool);
-    std::this_thread::sleep_for(std::chrono::milliseconds(300));
+    coro.Wait();
   }
 
   {
     ThreadPool pool;
     auto coro = ParallelExceptionDemo(pool);
-    std::this_thread::sleep_for(std::chrono::milliseconds(300));
+    coro.Wait();
   }
 
   {
     ThreadPool pool;
     auto coro = GetResultExceptionDemo(pool);
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    coro.Wait();
   }
 
   std::cout << "=== All exception demos completed ===\n";

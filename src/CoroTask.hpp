@@ -1,12 +1,17 @@
 #pragma once
 
+#include <condition_variable>
 #include <coroutine>
 #include <exception>
+#include <mutex>
 
 template <typename T = void>
 struct CoroTask {
   struct promise_type {
     std::exception_ptr exception_ = nullptr;
+    std::mutex wait_mutex_;
+    std::condition_variable wait_cv_;
+    bool is_done_ = false;
 
     CoroTask get_return_object() {
       return CoroTask{std::coroutine_handle<promise_type>::from_promise(*this)};
@@ -16,6 +21,11 @@ struct CoroTask {
       return {};
     }
     std::suspend_always final_suspend() noexcept {
+      {
+        std::lock_guard<std::mutex> lock(wait_mutex_);
+        is_done_ = true;
+      }
+      wait_cv_.notify_all();
       return {};
     }
 
@@ -56,6 +66,12 @@ struct CoroTask {
     if (handle) {
       handle.destroy();
     }
+  }
+
+  void Wait() {
+    if (!handle) return;
+    std::unique_lock<std::mutex> lock(handle.promise().wait_mutex_);
+    handle.promise().wait_cv_.wait(lock, [this] { return handle.promise().is_done_; });
   }
 
   void rethrow_if_exception() const {
