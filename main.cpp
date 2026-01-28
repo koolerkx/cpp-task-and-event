@@ -8,6 +8,10 @@ namespace ThenSuccessDemo {
 void RunAll();
 }
 
+namespace EventBusDemo {
+void RunAll();
+}
+
 int main() {
     RunAllDemo();
     RunAllCoroutineDemos();
@@ -15,5 +19,6 @@ int main() {
     RunAllExceptionHandlingDemos();
     RunAllCancellationDemos();
     ThenSuccessDemo::RunAll();
+    EventBusDemo::RunAll();
     return 0;
 }
