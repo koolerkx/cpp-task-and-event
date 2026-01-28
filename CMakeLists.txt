@@ -38,6 +38,10 @@ add_executable(app
   src/CoroutineDemo.cpp
   src/ReturnValueDemo.cpp
   src/ExceptionHandlingDemo.cpp
+  src/CancellationToken.hpp
+  src/TimeoutGuard.hpp
+  src/TaskExtensions.hpp
+  src/CancellationDemo.cpp
 )
 
 set_msvc_runtime(app)
