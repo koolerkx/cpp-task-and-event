@@ -30,12 +30,14 @@
 
 #include <any>
 #include <functional>
+#include <iostream>
 #include <memory>
 #include <mutex>
 #include <string>
 #include <unordered_map>
 
 #include "CancellationToken.hpp"
+#include "Event.hpp"
 #include "ThreadPool.hpp"
 
 class EventBus;
@@ -74,6 +76,43 @@ class EventBus : public std::enable_shared_from_this<EventBus> {
   void EmitAsync(const std::string& event_name, std::any data, CancellationTokenPtr token);
 
   EventHandle Subscribe(const std::string& event_name, EventHandler handler);
+
+  template<typename E>
+  requires EventType<E>
+  void Emit(const E& event) {
+    std::string name(E::GetEventName());
+    Emit(name, std::any(event));
+  }
+
+  template<typename E>
+  requires EventType<E>
+  EventHandle Subscribe(std::function<void(const E&)> handler) {
+    std::string name(E::GetEventName());
+
+    auto wrapper = [handler, name](std::any data) {
+      try {
+        const E& event = std::any_cast<const E&>(data);
+        handler(event);
+      } catch (const std::bad_any_cast& e) {
+        std::cerr << "EventBus: Type mismatch for event '" << name << "': " << e.what() << "\n";
+      }
+    };
+    return Subscribe(name, std::move(wrapper));
+  }
+
+  template<typename E>
+  requires EventType<E>
+  void EmitAsync(const E& event) {
+    std::string name(E::GetEventName());
+    EmitAsync(name, std::any(event));
+  }
+
+  template<typename E>
+  requires EventType<E>
+  void EmitAsync(const E& event, CancellationTokenPtr token) {
+    std::string name(E::GetEventName());
+    EmitAsync(name, std::any(event), token);
+  }
 
   EventBus(const EventBus&) = delete;
   EventBus& operator=(const EventBus&) = delete;

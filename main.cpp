@@ -12,6 +12,10 @@ namespace EventBusDemo {
 void RunAll();
 }
 
+namespace TypeSafeEventDemo {
+void RunAll();
+}
+
 int main() {
     RunAllDemo();
     RunAllCoroutineDemos();
@@ -20,5 +24,6 @@ int main() {
     RunAllCancellationDemos();
     ThenSuccessDemo::RunAll();
     EventBusDemo::RunAll();
+    TypeSafeEventDemo::RunAll();
     return 0;
 }
