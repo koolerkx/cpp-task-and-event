@@ -21,12 +21,17 @@ class TaskBase {
 
   void Wait() {
     std::unique_lock<std::mutex> lock(wait_mutex_);
-    wait_cv_.wait(lock, [this] {
-      return is_done_.load(std::memory_order_acquire);
-    });
+    wait_cv_.wait(lock, [this] { return is_done_.load(std::memory_order_acquire); });
   }
 
-  void OnPredecessorFinished(ThreadPool& pool) {
+  void OnPredecessorFinished(ThreadPool& pool, std::exception_ptr predecessor_exception = nullptr) {
+    if (predecessor_exception && !exception_) {
+      std::lock_guard<std::mutex> lock(exception_mutex_);
+      if (!exception_) {
+        exception_ = predecessor_exception;
+      }
+    }
+
     if (predecessor_count_.fetch_sub(1, std::memory_order_acq_rel) == 1) {
       TrySchedule(pool);
     }
@@ -57,9 +62,11 @@ class TaskBase {
   std::atomic<bool> is_done_{false};
   std::atomic<bool> is_scheduled_{false};
   std::exception_ptr exception_ = nullptr;
+  mutable std::mutex exception_mutex_;
   mutable std::mutex wait_mutex_;
   mutable std::condition_variable wait_cv_;
-  std::vector<std::shared_ptr<Task<void>>> successors_void_;
+  std::vector<std::shared_ptr<Task<void>>> successors_unconditional_;
+  std::vector<std::shared_ptr<Task<void>>> successors_conditional_;
 
   template <typename U>
   friend class Task;
@@ -70,14 +77,18 @@ class TaskBase {
 // Specialization for Task<void> must be defined first
 // because Task<T> needs to reference it
 template <>
-class Task<void> : public TaskBase,
-                   public std::enable_shared_from_this<Task<void>> {
+class Task<void> : public TaskBase, public std::enable_shared_from_this<Task<void>> {
  public:
-  explicit Task(std::function<void()> callback)
-      : callback_(std::move(callback)) {}
+  explicit Task(std::function<void()> callback) : callback_(std::move(callback)) {
+  }
 
   void Then(std::shared_ptr<Task<void>> next) {
-    successors_void_.push_back(next);
+    successors_unconditional_.push_back(next);
+    next->predecessor_count_.fetch_add(1, std::memory_order_relaxed);
+  }
+
+  void ThenSuccess(std::shared_ptr<Task<void>> next) {
+    successors_conditional_.push_back(next);
     next->predecessor_count_.fetch_add(1, std::memory_order_relaxed);
   }
 
@@ -88,6 +99,12 @@ class Task<void> : public TaskBase,
 
  private:
   void Execute(ThreadPool& pool) override {
+    if (exception_) {
+      NotifyFinished();
+      NotifySuccessors(pool);
+      return;
+    }
+
     auto self = shared_from_this();
     pool.Enqueue([self, &pool]() {
       try {
@@ -103,8 +120,11 @@ class Task<void> : public TaskBase,
   }
 
   void NotifySuccessors(ThreadPool& pool) override {
-    for (auto& next : successors_void_) {
-      next->OnPredecessorFinished(pool);
+    for (auto& next : successors_unconditional_) {
+      next->OnPredecessorFinished(pool, nullptr);
+    }
+    for (auto& next : successors_conditional_) {
+      next->OnPredecessorFinished(pool, exception_);
     }
   }
 
@@ -113,19 +133,28 @@ class Task<void> : public TaskBase,
 
 // Primary template for Task<T> with return value support
 template <typename T>
-class Task : public TaskBase,
-             public std::enable_shared_from_this<Task<T>> {
+class Task : public TaskBase, public std::enable_shared_from_this<Task<T>> {
  public:
-  explicit Task(std::function<T()> callback)
-      : callback_(std::move(callback)) {}
+  explicit Task(std::function<T()> callback) : callback_(std::move(callback)) {
+  }
 
   void Then(std::shared_ptr<Task<T>> next) {
-    successors_t_.push_back(next);
+    successors_t_unconditional_.push_back(next);
     next->predecessor_count_.fetch_add(1, std::memory_order_relaxed);
   }
 
   void Then(std::shared_ptr<Task<void>> next) {
-    successors_void_.push_back(next);
+    successors_unconditional_.push_back(next);
+    next->predecessor_count_.fetch_add(1, std::memory_order_relaxed);
+  }
+
+  void ThenSuccess(std::shared_ptr<Task<T>> next) {
+    successors_t_conditional_.push_back(next);
+    next->predecessor_count_.fetch_add(1, std::memory_order_relaxed);
+  }
+
+  void ThenSuccess(std::shared_ptr<Task<void>> next) {
+    successors_conditional_.push_back(next);
     next->predecessor_count_.fetch_add(1, std::memory_order_relaxed);
   }
 
@@ -143,6 +172,12 @@ class Task : public TaskBase,
 
  private:
   void Execute(ThreadPool& pool) override {
+    if (exception_) {  // return if exception for thenSuccess path
+      NotifyFinished();
+      NotifySuccessors(pool);
+      return;
+    }
+
     auto self = this->shared_from_this();
     pool.Enqueue([self, &pool]() {
       try {
@@ -158,17 +193,24 @@ class Task : public TaskBase,
   }
 
   void NotifySuccessors(ThreadPool& pool) override {
-    for (auto& next : successors_t_) {
-      next->OnPredecessorFinished(pool);
+    for (auto& next : successors_t_unconditional_) {
+      next->OnPredecessorFinished(pool, nullptr);
     }
-    for (auto& next : successors_void_) {
-      next->OnPredecessorFinished(pool);
+    for (auto& next : successors_t_conditional_) {
+      next->OnPredecessorFinished(pool, exception_);
+    }
+    for (auto& next : successors_unconditional_) {
+      next->OnPredecessorFinished(pool, nullptr);
+    }
+    for (auto& next : successors_conditional_) {
+      next->OnPredecessorFinished(pool, exception_);
     }
   }
 
   std::function<T()> callback_;
   std::optional<T> result_;
-  std::vector<std::shared_ptr<Task<T>>> successors_t_;
+  std::vector<std::shared_ptr<Task<T>>> successors_t_unconditional_;
+  std::vector<std::shared_ptr<Task<T>>> successors_t_conditional_;
 
   friend class Task<void>;
 };

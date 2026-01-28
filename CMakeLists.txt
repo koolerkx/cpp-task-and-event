@@ -42,6 +42,7 @@ add_executable(app
   src/TimeoutGuard.hpp
   src/TaskExtensions.hpp
   src/CancellationDemo.cpp
+  src/ThenSuccessDemo.cpp
 )
 
 set_msvc_runtime(app)
