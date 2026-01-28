@@ -8,7 +8,6 @@
 #include "TaskAwaiter.hpp"
 #include "ThreadPool.hpp"
 
-
 struct AssetLoadException : public std::exception {
   std::string message;
   AssetLoadException(std::string msg) : message(std::move(msg)) {
@@ -18,6 +17,8 @@ struct AssetLoadException : public std::exception {
   }
 };
 
+// Demonstrates exception handling in void-returning tasks
+// Shows: exception propagation through await, catch blocks
 CoroTask<void> BasicVoidExceptionDemo(ThreadPool& pool) {
   std::cout << "=== Basic Void Exception Demo ===\n";
 
@@ -33,6 +34,8 @@ CoroTask<void> BasicVoidExceptionDemo(ThreadPool& pool) {
   }
 }
 
+// Demonstrates exception handling in tasks returning values
+// Shows: exception in int-returning task, no result returned
 CoroTask<void> IntReturnExceptionDemo(ThreadPool& pool) {
   std::cout << "=== Int Return Exception Demo ===\n";
 
@@ -51,6 +54,8 @@ CoroTask<void> IntReturnExceptionDemo(ThreadPool& pool) {
   }
 }
 
+// Demonstrates custom exception type handling
+// Shows: domain-specific exceptions, specific catch blocks
 CoroTask<void> CustomExceptionDemo(ThreadPool& pool) {
   std::cout << "=== Custom Exception Demo ===\n";
 
@@ -72,6 +77,8 @@ CoroTask<void> CustomExceptionDemo(ThreadPool& pool) {
   std::cout << "\n";
 }
 
+// Demonstrates exception propagation in DAG task graphs
+// Shows: exception in one branch doesn't affect independent branches
 CoroTask<void> DAGExceptionPropagationDemo(ThreadPool& pool) {
   std::cout << "=== DAG Exception Propagation Demo ===\n";
 
@@ -101,6 +108,8 @@ CoroTask<void> DAGExceptionPropagationDemo(ThreadPool& pool) {
   std::cout << "Task C completed\n\n";
 }
 
+// Demonstrates handling exceptions in parallel tasks
+// Shows: individual try-catch for each parallel task, error aggregation
 CoroTask<void> ParallelExceptionDemo(ThreadPool& pool) {
   std::cout << "=== Parallel Exception Demo ===\n";
 
@@ -157,6 +166,8 @@ CoroTask<void> ParallelExceptionDemo(ThreadPool& pool) {
   std::cout << "Summary: " << success_count << "/3 succeeded, sum = " << sum << "\n\n";
 }
 
+// Demonstrates exception handling via GetResult()
+// Shows: exception rethrowing when calling GetResult()
 CoroTask<void> GetResultExceptionDemo(ThreadPool& pool) {
   std::cout << "=== GetResult Exception Demo ===\n";
 
@@ -175,6 +186,8 @@ CoroTask<void> GetResultExceptionDemo(ThreadPool& pool) {
   std::cout << "\n";
 }
 
+// Runs all exception handling demonstrations
+// Shows: comprehensive exception handling patterns
 void RunAllExceptionHandlingDemos() {
   std::cout << "==============================================\n";
   std::cout << "=== Exception Handling Demo Suite ===\n";

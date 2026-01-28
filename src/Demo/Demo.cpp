@@ -5,7 +5,8 @@
 #include "Task.hpp"
 #include "ThreadPool.hpp"
 
-
+// Demonstrates basic task execution in a thread pool
+// Shows: scheduling multiple tasks, waiting for completion, thread pool usage
 void RunBasicDemo() {
   std::cout << "=== Basic Task Execution Demo ===" << std::endl;
 
@@ -24,6 +25,8 @@ void RunBasicDemo() {
   std::cout << std::endl;
 }
 
+// Demonstrates simple Directed Acyclic Graph (DAG) task dependencies
+// Shows: task graph with two independent tasks (A, B) depending on one task (C)
 void RunDAGDemo() {
   std::cout << "=== DAG Dependencies Demo ===" << std::endl;
   std::cout << "Graph: A -> C, B -> C\n" << std::endl;
@@ -47,6 +50,9 @@ void RunDAGDemo() {
   std::cout << std::endl;
 }
 
+// Demonstrates complex multi-level DAG task dependencies
+// Shows: hierarchical task graph with 5 tasks across 3 levels
+// Demonstrates: automatic dependency resolution and execution order
 void RunComplexDAGDemo() {
   std::cout << "=== Complex DAG Demo ===" << std::endl;
   std::cout << "Graph:\n";
@@ -85,6 +91,8 @@ void RunComplexDAGDemo() {
   std::cout << std::endl;
 }
 
+// Runs all basic demos in sequence
+// Shows: complete overview of core task system features
 void RunAllDemo() {
   RunBasicDemo();
   RunDAGDemo();

@@ -7,6 +7,8 @@
 
 namespace ThenSuccessDemo {
 
+// Tests basic success chain with Then semantics
+// Shows: sequential execution only when all predecessors succeed
 void TestBasicSuccess() {
   std::cout << "\n=== Test 1: Basic Success Chain ===\n";
 
@@ -40,6 +42,8 @@ void TestBasicSuccess() {
   std::cout << "Task C result: " << taskC->GetResult() << "\n";
 }
 
+// Tests exception propagation through Then chain
+// Shows: exception prevents subsequent tasks from running
 void TestExceptionPropagation() {
   std::cout << "\n=== Test 2: Exception Propagation ===\n";
 
@@ -80,6 +84,8 @@ void TestExceptionPropagation() {
   }
 }
 
+// Tests mixing Then and Finally semantics
+// Shows: Finally runs regardless of exception, Then only on success
 void TestMixedSemantics() {
   std::cout << "\n=== Test 3: Mixed Then and ThenSuccess ===\n";
 
@@ -121,6 +127,8 @@ void TestMixedSemantics() {
   }
 }
 
+// Tests Then with multiple predecessors, some failing
+// Shows: any predecessor failure prevents dependent task
 void TestMultiplePredecessors() {
   std::cout << "\n=== Test 4: Multiple Predecessors with Exception ===\n";
 
@@ -157,6 +165,8 @@ void TestMultiplePredecessors() {
   }
 }
 
+// Tests exception propagation in void tasks
+// Shows: void tasks also propagate exceptions through Then
 void TestVoidTaskPropagation() {
   std::cout << "\n=== Test 5: Void Task Exception Propagation ===\n";
 
@@ -187,6 +197,8 @@ void TestVoidTaskPropagation() {
   std::cout << "Execution log (should be empty): [" << execution_log << "]\n";
 }
 
+// Tests long chain of Then dependencies
+// Shows: sequential execution over many stages
 void TestLongChain() {
   std::cout << "\n=== Test 6: Long Success Chain ===\n";
 
@@ -235,6 +247,8 @@ void TestLongChain() {
   std::cout << "Task 5 result: " << task5->GetResult() << "\n";
 }
 
+// Tests long chain with early failure
+// Shows: early failure prevents entire remaining chain
 void TestLongChainWithFailure() {
   std::cout << "\n=== Test 7: Long Chain with Early Failure ===\n";
 
@@ -290,6 +304,8 @@ void TestLongChainWithFailure() {
   }
 }
 
+// Runs all ThenSuccess demonstration tests
+// Shows: comprehensive Then semantics validation
 void RunAll() {
   std::cout << "\n========================================\n";
   std::cout << "   ThenSuccess Demonstration Tests   \n";

@@ -7,6 +7,8 @@
 #include "TaskAwaiter.hpp"
 #include "ThreadPool.hpp"
 
+// Demonstrates basic coroutine await syntax with Task
+// Shows: co_await on a Task within a coroutine
 CoroTask<void> SimpleAwaitDemo(ThreadPool& pool) {
   std::cout << "[Thread " << std::this_thread::get_id() << "] Coroutine started\n";
 
@@ -20,6 +22,8 @@ CoroTask<void> SimpleAwaitDemo(ThreadPool& pool) {
   std::cout << "[Thread " << std::this_thread::get_id() << "] Task completed, coroutine resumed!\n";
 }
 
+// Demonstrates sequential execution of multiple tasks using await
+// Shows: awaiting tasks one after another, maintaining order
 CoroTask<void> SequentialAwaitDemo(ThreadPool& pool) {
   std::cout << "\n=== Sequential Await Demo ===\n";
 
@@ -48,6 +52,8 @@ CoroTask<void> SequentialAwaitDemo(ThreadPool& pool) {
   std::cout << "[Thread " << std::this_thread::get_id() << "] Material ready!\n";
 }
 
+// Demonstrates parallel task execution with coordinated awaiting
+// Shows: scheduling tasks in parallel, then awaiting results
 CoroTask<void> ParallelAwaitDemo(ThreadPool& pool) {
   std::cout << "\n=== Parallel Await Demo ===\n";
 
@@ -82,6 +88,8 @@ CoroTask<void> ParallelAwaitDemo(ThreadPool& pool) {
   std::cout << "[Thread " << std::this_thread::get_id() << "] All parallel tasks completed!\n";
 }
 
+// Demonstrates mixed sequential and parallel execution patterns
+// Shows: combining sequential phases with parallel phases
 CoroTask<void> MixedDemo(ThreadPool& pool) {
   std::cout << "\n=== Mixed Sequential + Parallel Demo ===\n";
 
@@ -120,6 +128,8 @@ CoroTask<void> MixedDemo(ThreadPool& pool) {
   std::cout << "[Thread " << std::this_thread::get_id() << "] Initialization complete!\n";
 }
 
+// Runs all coroutine demonstrations
+// Shows: complete overview of coroutine async/await features
 void RunAllCoroutineDemos() {
   std::cout << "======================================\n";
   std::cout << "=== C++20 Coroutine Async/Await Demo ===\n";

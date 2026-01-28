@@ -8,7 +8,6 @@
 #include "TaskAwaiter.hpp"
 #include "ThreadPool.hpp"
 
-
 // Custom struct for demo
 struct AssetInfo {
   std::string name;
@@ -16,8 +15,8 @@ struct AssetInfo {
   int version;
 };
 
-
 // Demo 1: Basic integer return value
+// Demonstrates: Task<T> returning primitive types, awaiting results
 CoroTask<void> BasicIntReturnDemo(ThreadPool& pool) {
   std::cout << "=== Basic Int Return Demo ===\n";
 
@@ -33,8 +32,8 @@ CoroTask<void> BasicIntReturnDemo(ThreadPool& pool) {
   std::cout << "[Thread " << std::this_thread::get_id() << "] Got result: " << result << "\n\n";
 }
 
-
 // Demo 2: String return value
+// Demonstrates: Task<T> returning complex types, move semantics
 CoroTask<void> StringReturnDemo(ThreadPool& pool) {
   std::cout << "=== String Return Demo ===\n";
 
@@ -50,8 +49,8 @@ CoroTask<void> StringReturnDemo(ThreadPool& pool) {
   std::cout << "[Thread " << std::this_thread::get_id() << "] Config loaded: " << config << "\n\n";
 }
 
-
 // Demo 3: Custom struct return value
+// Demonstrates: Task<T> returning custom structs, accessing members
 CoroTask<void> CustomStructReturnDemo(ThreadPool& pool) {
   std::cout << "=== Custom Struct Return Demo ===\n";
 
@@ -70,8 +69,8 @@ CoroTask<void> CustomStructReturnDemo(ThreadPool& pool) {
   std::cout << "  Version: " << info.version << "\n\n";
 }
 
-
 // Demo 4: Sequential data processing (not true chaining, but sequential awaiting)
+// Demonstrates: data passing between stages, sequential processing pipeline
 CoroTask<void> DataPipelineDemo(ThreadPool& pool) {
   std::cout << "=== Data Pipeline Demo ===\n";
 
@@ -103,8 +102,8 @@ CoroTask<void> DataPipelineDemo(ThreadPool& pool) {
   std::cout << "[Thread " << std::this_thread::get_id() << "] Final sum: " << sum << "\n\n";
 }
 
-
 // Demo 5: Parallel tasks with different return types
+// Demonstrates: parallel execution with heterogeneous return types
 CoroTask<void> ParallelMultiTypeDemo(ThreadPool& pool) {
   std::cout << "=== Parallel Multi-Type Return Demo ===\n";
 
@@ -142,8 +141,8 @@ CoroTask<void> ParallelMultiTypeDemo(ThreadPool& pool) {
   std::cout << "[Thread " << std::this_thread::get_id() << "] Memory: " << memory << " GB\n\n";
 }
 
-
 // Demo 6: Mixed void and return value tasks
+// Demonstrates: combining void and value-returning tasks in sequence
 CoroTask<void> MixedVoidAndValueDemo(ThreadPool& pool) {
   std::cout << "=== Mixed Void and Value Return Demo ===\n";
 
@@ -171,9 +170,7 @@ CoroTask<void> MixedVoidAndValueDemo(ThreadPool& pool) {
   std::cout << "[Thread " << std::this_thread::get_id() << "] Render target ID: " << targetId << "\n";
 
   // Finally, cleanup (void return)
-  auto cleanupTask = std::make_shared<Task<void>>([] {
-    std::cout << "[Thread " << std::this_thread::get_id() << "] Cleanup complete\n";
-  });
+  auto cleanupTask = std::make_shared<Task<void>>([] { std::cout << "[Thread " << std::this_thread::get_id() << "] Cleanup complete\n"; });
 
   cleanupTask->TrySchedule(pool);
 
@@ -181,7 +178,8 @@ CoroTask<void> MixedVoidAndValueDemo(ThreadPool& pool) {
   std::cout << "[Thread " << std::this_thread::get_id() << "] All done!\n\n";
 }
 
-
+// Runs all return value demonstrations
+// Shows: comprehensive Task<T> return value patterns
 void RunAllReturnValueDemos() {
   std::cout << "==============================================\n";
   std::cout << "=== Task<T> Return Value Demo Suite ===\n";

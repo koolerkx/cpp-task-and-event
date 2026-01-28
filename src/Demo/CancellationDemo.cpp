@@ -12,6 +12,7 @@
 using namespace std::chrono_literals;
 
 // Demo 1: Basic cancellation - check before work
+// Demonstrates: cancellation before task execution starts
 CoroTask<void> BasicCancellationDemo(ThreadPool& pool) {
   std::cout << "=== Basic Cancellation Demo ===\n";
 
@@ -41,6 +42,7 @@ CoroTask<void> BasicCancellationDemo(ThreadPool& pool) {
 }
 
 // Demo 2: Timeout - using WithTimeout with quick operation (demonstrates successful completion)
+// Demonstrates: task completing within timeout limit
 CoroTask<void> TimeoutDemo(ThreadPool& pool) {
   std::cout << "=== Timeout Demo (Successful Completion) ===\n";
 
@@ -64,6 +66,7 @@ CoroTask<void> TimeoutDemo(ThreadPool& pool) {
 }
 
 // Demo 3: Polling cancellation - cooperative long-running task
+// Demonstrates: cooperative cancellation through periodic checks
 CoroTask<void> PollingCancellationDemo(ThreadPool& pool) {
   std::cout << "=== Polling Cancellation Demo ===\n";
 
@@ -100,6 +103,7 @@ CoroTask<void> PollingCancellationDemo(ThreadPool& pool) {
 }
 
 // Demo 4: Successful completion within timeout
+// Demonstrates: another successful timeout scenario
 CoroTask<void> SuccessfulTimeoutDemo(ThreadPool& pool) {
   std::cout << "=== Successful Within Timeout Demo ===\n";
 
@@ -123,6 +127,7 @@ CoroTask<void> SuccessfulTimeoutDemo(ThreadPool& pool) {
 }
 
 // Demo 5: Multiple tasks sharing cancellation token
+// Demonstrates: one token cancelling multiple tasks
 CoroTask<void> SharedCancellationDemo(ThreadPool& pool) {
   std::cout << "=== Shared Cancellation Token Demo ===\n";
 
@@ -188,6 +193,7 @@ CoroTask<void> SharedCancellationDemo(ThreadPool& pool) {
 }
 
 // Demo 6: Cancellation callback registration
+// Demonstrates: callback execution on cancellation
 CoroTask<void> CancellationCallbackDemo(ThreadPool& pool) {
   std::cout << "=== Cancellation Callback Demo ===\n";
 
@@ -219,6 +225,7 @@ CoroTask<void> CancellationCallbackDemo(ThreadPool& pool) {
 }
 
 // Demo 7: DAG with partial cancellation
+// Demonstrates: selective cancellation in task graph
 CoroTask<void> DAGCancellationDemo(ThreadPool& pool) {
   std::cout << "=== DAG Partial Cancellation Demo ===\n";
 
@@ -271,6 +278,8 @@ CoroTask<void> DAGCancellationDemo(ThreadPool& pool) {
   std::cout << "Task C completed (A succeeded, so C runs)\n\n";
 }
 
+// Runs all cancellation and timeout demonstrations
+// Shows: comprehensive cancellation patterns and timeout handling
 void RunAllCancellationDemos() {
   std::cout << "==============================================\n";
   std::cout << "=== Cancellation & Timeout Demo Suite ===\n";
