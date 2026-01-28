@@ -1,26 +1,32 @@
 /**
  * @file EventBus.hpp
- * @brief Memory-safe, thread-safe event bus with async support and cancellation.
- * @details Provides pub-sub event system with RAII handles, stable ID-based subscriptions,
- *          and integration with ThreadPool for async event dispatch.
+ * @brief Type-safe, thread-safe event bus with async support and cancellation.
+ * @details Provides pub-sub event system with compile-time type safety, RAII handles,
+ *          stable ID-based subscriptions, and integration with ThreadPool for async dispatch.
  *
  * Key Features:
+ * - Compile-time type safety (no std::any, no runtime casting)
  * - Sync/Async emit with optional cancellation
  * - RAII EventHandle for automatic cleanup
  * - Thread-safe handler storage with unique_lock + snapshot pattern
  * - ID-based subscriptions (unsubscribe is O(1) and doesn't invalidate other handles)
  *
  * @code{.cpp}
+ * struct PlayerDamagedEvent : Event<PlayerDamagedEvent> {
+ *   static constexpr std::string_view EventName = "player.damaged";
+ *   int player_id;
+ *   float damage;
+ * };
+ *
  * ThreadPool pool(4);
  * auto bus = std::make_shared<EventBus>(pool);
  *
- * auto handle = bus->Subscribe("player.damaged", [](std::any data) {
- *     int damage = std::any_cast<int>(data);
- *     std::cout << "Player took " << damage << " damage\n";
+ * auto handle = bus->Subscribe<PlayerDamagedEvent>([](const PlayerDamagedEvent& event) {
+ *     std::cout << "Player " << event.player_id << " took " << event.damage << " damage\n";
  * });
  *
- * bus->Emit("player.damaged", 25);  // Sync
- * bus->EmitAsync("player.damaged", 30);  // Async
+ * bus->Emit(PlayerDamagedEvent{.player_id = 1, .damage = 25.0f});  // Sync
+ * bus->EmitAsync(PlayerDamagedEvent{.player_id = 1, .damage = 30.0f});  // Async
  *
  * handle.Unsubscribe();  // Manual cleanup (auto on destruction)
  * @endcode
@@ -28,24 +34,22 @@
 
 #pragma once
 
-#include <any>
 #include <functional>
 #include <memory>
 #include <mutex>
-#include <string>
+#include <typeindex>
 #include <unordered_map>
 
 #include "CancellationToken.hpp"
+#include "Event.hpp"
 #include "ThreadPool.hpp"
 
 class EventBus;
 
-using EventHandler = std::function<void(std::any)>;
-
 class EventHandle {
  public:
-  EventHandle(std::weak_ptr<EventBus> bus, std::string event_name, uint64_t handler_id)
-      : bus_(std::move(bus)), event_name_(std::move(event_name)), handler_id_(handler_id) {
+  EventHandle(std::weak_ptr<EventBus> bus, std::type_index event_type, uint64_t handler_id)
+      : bus_(std::move(bus)), event_type_(event_type), handler_id_(handler_id) {
   }
 
   void Unsubscribe();
@@ -58,7 +62,7 @@ class EventHandle {
 
  private:
   std::weak_ptr<EventBus> bus_;
-  std::string event_name_;
+  std::type_index event_type_;
   uint64_t handler_id_;
 };
 
@@ -67,23 +71,132 @@ class EventBus : public std::enable_shared_from_this<EventBus> {
   explicit EventBus(ThreadPool& pool) : pool_(pool) {
   }
 
-  void Emit(const std::string& event_name, std::any data);
+  template <typename E>
+    requires EventType<E>
+  void Emit(const E& event) {
+    // Take the registered handler
+    std::type_index type_id(typeid(E));
+    std::vector<TypeErasedHandler> handlers_snapshot;  // prevent long lock holds and potential deadlocks
 
-  void EmitAsync(const std::string& event_name, std::any data);
+    {
+      std::unique_lock<std::mutex> lock(handlers_mutex_);
+      auto event_it = event_handlers_.find(type_id);
+      if (event_it != event_handlers_.end()) {
+        handlers_snapshot.reserve(event_it->second.size());
+        for (const auto& [id, handler] : event_it->second) {
+          handlers_snapshot.push_back(handler);  // copy assignment
+        }
+      }
+    }
 
-  void EmitAsync(const std::string& event_name, std::any data, CancellationTokenPtr token);
+    // Execute the registered handler
+    for (auto& handler : handlers_snapshot) {
+      try {
+        handler(&event);
+      } catch (const std::exception&) {
+      }
+    }
+  }
 
-  EventHandle Subscribe(const std::string& event_name, EventHandler handler);
+  template <typename E>
+    requires EventType<E>
+  void EmitAsync(const E& event) {
+    // Take the registered handler
+    std::type_index type_id(typeid(E));
+    std::vector<TypeErasedHandler> handlers_snapshot;  // prevent long lock holds and potential deadlocks
+
+    {
+      std::unique_lock<std::mutex> lock(handlers_mutex_);
+      auto event_it = event_handlers_.find(type_id);
+      if (event_it != event_handlers_.end()) {
+        handlers_snapshot.reserve(event_it->second.size());
+        for (const auto& [id, handler] : event_it->second) {
+          handlers_snapshot.push_back(handler);  // copy assignment
+        }
+      }
+    }
+
+    // Execute the registered handler
+    auto event_copy = std::make_shared<E>(event);  // prevent access violation when leaving the scope
+    for (auto& handler : handlers_snapshot) {
+      pool_.Enqueue([handler, event_copy]() {
+        try {
+          handler(event_copy.get());
+        } catch (const std::exception&) {
+        }
+      });
+    }
+  }
+
+  template <typename E>
+    requires EventType<E>
+  void EmitAsync(const E& event, CancellationTokenPtr token) {
+    if (token && token->IsCancelled()) {
+      return;
+    }
+
+    // Take the registered handler
+    std::type_index type_id(typeid(E));
+    std::vector<TypeErasedHandler> handlers_snapshot;  // prevent long lock holds and potential deadlocks
+
+    {
+      std::unique_lock<std::mutex> lock(handlers_mutex_);
+      auto event_it = event_handlers_.find(type_id);
+      if (event_it != event_handlers_.end()) {
+        handlers_snapshot.reserve(event_it->second.size());
+        for (const auto& [id, handler] : event_it->second) {
+          handlers_snapshot.push_back(handler);  // copy assignment
+        }
+      }
+    }
+
+    // Execute the registered handler
+    auto event_copy = std::make_shared<E>(event);  // prevent access violation when leaving the scope
+    for (auto& handler : handlers_snapshot) {
+      if (token && token->IsCancelled()) {
+        break;
+      }
+
+      pool_.Enqueue([handler, event_copy, token]() {
+        if (token && token->IsCancelled()) {
+          return;
+        }
+        try {
+          handler(event_copy.get());
+        } catch (const std::exception&) {
+        }
+      });
+    }
+  }
+
+  template <typename E>
+    requires EventType<E>
+  EventHandle Subscribe(std::function<void(const E&)> handler) {
+    std::type_index type_id(typeid(E));
+
+    auto type_erased_handler = [handler](const void* data) { handler(*static_cast<const E*>(data)); };
+
+    uint64_t handler_id;
+    {
+      std::unique_lock<std::mutex> lock(handlers_mutex_);
+      handler_id = next_handler_id_++;
+      event_handlers_[type_id][handler_id] = std::move(type_erased_handler);
+    }
+    return EventHandle(weak_from_this(), type_id, handler_id);
+  }
 
   EventBus(const EventBus&) = delete;
   EventBus& operator=(const EventBus&) = delete;
 
  private:
   friend class EventHandle;
-  void Unsubscribe(const std::string& event_name, uint64_t handler_id);
+
+  using TypeErasedHandler = std::function<void(const void*)>;
+
+  void Unsubscribe(std::type_index event_type, uint64_t handler_id);
 
   ThreadPool& pool_;
   uint64_t next_handler_id_{0};
   std::mutex handlers_mutex_;
-  std::unordered_map<std::string, std::unordered_map<uint64_t, EventHandler>> event_handlers_;
+  std::unordered_map<std::type_index, std::unordered_map<uint64_t, TypeErasedHandler>> event_handlers_;
 };

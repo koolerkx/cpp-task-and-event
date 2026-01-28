@@ -37,8 +37,10 @@ add_executable(app
   src/TaskSystem/CancellationToken.hpp
   src/TaskSystem/TimeoutGuard.hpp
   src/TaskSystem/TaskExtensions.hpp
+  src/TaskSystem/Event.hpp
   src/TaskSystem/EventBus.hpp
   src/TaskSystem/EventBus.cpp
+  src/Demo/Events.hpp
   src/Demo/Demo.cpp
   src/Demo/CoroutineDemo.cpp
   src/Demo/ReturnValueDemo.cpp
@@ -46,6 +48,7 @@ add_executable(app
   src/Demo/CancellationDemo.cpp
   src/Demo/ThenSuccessDemo.cpp
   src/Demo/EventBusDemo.cpp
+  src/Demo/TypeSafeEventDemo.cpp
 )
 
 target_include_directories(app PRIVATE

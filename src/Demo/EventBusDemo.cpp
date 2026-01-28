@@ -9,10 +9,46 @@
 #include <thread>
 
 #include "CancellationToken.hpp"
+#include "Event.hpp"
 #include "EventBus.hpp"
 #include "ThreadPool.hpp"
 
 namespace EventBusDemo {
+
+struct TestEvent : Event<TestEvent> {
+  static constexpr std::string_view EventName = "test.event";
+  float damage;
+};
+
+struct TestAsyncEvent : Event<TestAsyncEvent> {
+  static constexpr std::string_view EventName = "test.async";
+  int value;
+};
+
+struct TestCancelEvent : Event<TestCancelEvent> {
+  static constexpr std::string_view EventName = "test.cancel";
+  int value;
+};
+
+struct TestCancelDuringEvent : Event<TestCancelDuringEvent> {
+  static constexpr std::string_view EventName = "test.cancel.during";
+  int value;
+};
+
+struct TestLifetimeEvent : Event<TestLifetimeEvent> {
+  static constexpr std::string_view EventName = "test.lifetime";
+  int value;
+};
+
+struct EventA : Event<EventA> {
+  static constexpr std::string_view EventName = "event.a";
+  int value;
+};
+
+struct EventB : Event<EventB> {
+  static constexpr std::string_view EventName = "event.b";
+  int value;
+};
 
 // Tests basic synchronous event emission with multiple subscribers
 // Shows: event dispatch, multiple handlers, call counting
@@ -23,16 +59,11 @@ void TestBasicEmit() {
   auto bus = std::make_shared<EventBus>(pool);
 
   int call_count = 0;
-  auto handle1 = bus->Subscribe("test.event", [&](std::any) { call_count++; });
-  auto handle2 = bus->Subscribe("test.event", [&](std::any) { call_count++; });
-  auto handle3 = bus->Subscribe("test.event", [&](std::any data) {
-    if (data.has_value()) {
-      float damage = std::any_cast<float>(data);
-      std::cout << "Player took " << damage << " damage\n";
-    }
-  });
+  auto handle1 = bus->Subscribe<TestEvent>([&](const TestEvent&) { call_count++; });
+  auto handle2 = bus->Subscribe<TestEvent>([&](const TestEvent&) { call_count++; });
+  auto handle3 = bus->Subscribe<TestEvent>([&](const TestEvent& event) { std::cout << "Player took " << event.damage << " damage\n"; });
 
-  bus->Emit("test.event", 10.0f);
+  bus->Emit(TestEvent{.damage = 10.0f});
   std::cout << "Call count: " << call_count << " (expected: 2)\n";
   assert(call_count == 2);
 }
@@ -46,18 +77,18 @@ void TestUnsubscribe() {
   auto bus = std::make_shared<EventBus>(pool);
 
   int call_count = 0;
-  auto handle1 = bus->Subscribe("test.event", [&](std::any) { call_count++; });
-  auto handle2 = bus->Subscribe("test.event", [&](std::any) { call_count++; });
-  auto handle3 = bus->Subscribe("test.event", [&](std::any) { call_count++; });
+  auto handle1 = bus->Subscribe<TestEvent>([&](const TestEvent&) { call_count++; });
+  auto handle2 = bus->Subscribe<TestEvent>([&](const TestEvent&) { call_count++; });
+  auto handle3 = bus->Subscribe<TestEvent>([&](const TestEvent&) { call_count++; });
 
-  bus->Emit("test.event", 0);
+  bus->Emit(TestEvent{.damage = 0.0f});
   std::cout << "First emit - call count: " << call_count << " (expected: 3)\n";
   assert(call_count == 3);
 
   handle2.Unsubscribe();
   call_count = 0;
 
-  bus->Emit("test.event", 0);
+  bus->Emit(TestEvent{.damage = 0.0f});
   std::cout << "After unsubscribe handler 2 - call count: " << call_count << " (expected: 2)\n";
   assert(call_count == 2);
 
@@ -65,7 +96,7 @@ void TestUnsubscribe() {
   handle3.Unsubscribe();
   call_count = 0;
 
-  bus->Emit("test.event", 0);
+  bus->Emit(TestEvent{.damage = 0.0f});
   std::cout << "After unsubscribe all - call count: " << call_count << " (expected: 0)\n";
   assert(call_count == 0);
 }
@@ -79,16 +110,16 @@ void TestAsyncEmit() {
   auto bus = std::make_shared<EventBus>(pool);
 
   std::atomic<int> call_count{0};
-  auto handle1 = bus->Subscribe("test.async", [&](std::any) {
+  auto handle1 = bus->Subscribe<TestAsyncEvent>([&](const TestAsyncEvent&) {
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
     call_count++;
   });
-  auto handle2 = bus->Subscribe("test.async", [&](std::any) {
+  auto handle2 = bus->Subscribe<TestAsyncEvent>([&](const TestAsyncEvent&) {
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
     call_count++;
   });
 
-  bus->EmitAsync("test.async", 0);
+  bus->EmitAsync(TestAsyncEvent{.value = 0});
 
   std::this_thread::sleep_for(std::chrono::milliseconds(50));
   std::cout << "Async call count: " << call_count << " (expected: 2)\n";
@@ -107,9 +138,9 @@ void TestCancellation() {
   token->Cancel();
 
   std::atomic<int> call_count{0};
-  auto handle = bus->Subscribe("test.cancel", [&](std::any) { call_count++; });
+  auto handle = bus->Subscribe<TestCancelEvent>([&](const TestCancelEvent&) { call_count++; });
 
-  bus->EmitAsync("test.cancel", 0, token);
+  bus->EmitAsync(TestCancelEvent{.value = 0}, token);
 
   std::this_thread::sleep_for(std::chrono::milliseconds(50));
   std::cout << "After cancel before emit - call count: " << call_count << " (expected: 0)\n";
@@ -128,13 +159,13 @@ void TestCancellationDuringEmit() {
   std::atomic<int> call_count{0};
 
   for (int i = 0; i < 10; ++i) {
-    bus->Subscribe("test.cancel.during", [&](std::any) {
+    bus->Subscribe<TestCancelDuringEvent>([&](const TestCancelDuringEvent&) {
       std::this_thread::sleep_for(std::chrono::milliseconds(20));
       call_count++;
     });
   }
 
-  bus->EmitAsync("test.cancel.during", 0, token);
+  bus->EmitAsync(TestCancelDuringEvent{.value = 0}, token);
 
   std::this_thread::sleep_for(std::chrono::milliseconds(5));
   token->Cancel();
@@ -153,9 +184,9 @@ void TestHandleLifetime() {
   auto bus = std::make_shared<EventBus>(pool);
 
   int call_count = 0;
-  auto handle = bus->Subscribe("test.lifetime", [&](std::any) { call_count++; });
+  auto handle = bus->Subscribe<TestLifetimeEvent>([&](const TestLifetimeEvent&) { call_count++; });
 
-  bus->Emit("test.lifetime", 0);
+  bus->Emit(TestLifetimeEvent{.value = 0});
   assert(call_count == 1);
 
   bus.reset();
@@ -175,12 +206,12 @@ void TestMultipleEvents() {
   int event_a_count = 0;
   int event_b_count = 0;
 
-  auto handle_a = bus->Subscribe("event.a", [&](std::any) { event_a_count++; });
-  auto handle_b = bus->Subscribe("event.b", [&](std::any) { event_b_count++; });
+  auto handle_a = bus->Subscribe<EventA>([&](const EventA&) { event_a_count++; });
+  auto handle_b = bus->Subscribe<EventB>([&](const EventB&) { event_b_count++; });
 
-  bus->Emit("event.a", 0);
-  bus->Emit("event.b", 0);
-  bus->Emit("event.a", 0);
+  bus->Emit(EventA{.value = 0});
+  bus->Emit(EventB{.value = 0});
+  bus->Emit(EventA{.value = 0});
 
   std::cout << "Event A count: " << event_a_count << " (expected: 2)\n";
   std::cout << "Event B count: " << event_b_count << " (expected: 1)\n";
