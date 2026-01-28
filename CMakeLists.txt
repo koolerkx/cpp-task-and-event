@@ -30,19 +30,23 @@ endfunction()
 
 add_executable(app
   main.cpp
-  src/ThreadPool.hpp
-  src/Task.hpp
-  src/Demo.cpp
-  src/CoroTask.hpp
-  src/TaskAwaiter.hpp
-  src/CoroutineDemo.cpp
-  src/ReturnValueDemo.cpp
-  src/ExceptionHandlingDemo.cpp
-  src/CancellationToken.hpp
-  src/TimeoutGuard.hpp
-  src/TaskExtensions.hpp
-  src/CancellationDemo.cpp
-  src/ThenSuccessDemo.cpp
+  src/TaskSystem/ThreadPool.hpp
+  src/TaskSystem/Task.hpp
+  src/TaskSystem/CoroTask.hpp
+  src/TaskSystem/TaskAwaiter.hpp
+  src/TaskSystem/CancellationToken.hpp
+  src/TaskSystem/TimeoutGuard.hpp
+  src/TaskSystem/TaskExtensions.hpp
+  src/Demo/Demo.cpp
+  src/Demo/CoroutineDemo.cpp
+  src/Demo/ReturnValueDemo.cpp
+  src/Demo/ExceptionHandlingDemo.cpp
+  src/Demo/CancellationDemo.cpp
+  src/Demo/ThenSuccessDemo.cpp
+)
+
+target_include_directories(app PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/TaskSystem
 )
 
 set_msvc_runtime(app)
