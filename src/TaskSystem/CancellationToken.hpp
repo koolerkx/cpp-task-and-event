@@ -1,3 +1,9 @@
+/**
+ * @file CancellationToken.hpp
+ * @brief Lightweight cancellation token to signal and observe cancellation.
+ * @details Provides cancellation signaling, callback registration, and exception support via TaskCancelledException.
+ * @note Use callbacks to react to cancellation
+ */
 #pragma once
 
 #include <atomic>

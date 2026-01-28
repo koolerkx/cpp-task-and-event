@@ -1,9 +1,20 @@
+/**
+ * @file TaskAwaiter.hpp
+ * @brief Coroutine awaiter for Task<T> and Task<void>.
+ * @details Provides awaitable adapters that resume coroutines when underlying tasks complete and handle exceptions/results.
+ * @note Use within coroutines to await tasks; resume happens via a resumption Task
+ *
+ * @code{.cpp}
+ * TaskAwaiter<void> awaiter{task, pool};
+ * co_await awaiter;
+ * @endcode
+ */
+
 #pragma once
 
 #include <coroutine>
 
 #include "Task.hpp"
-
 
 // Primary template for TaskAwaiter<T> - returns the task's result
 template <typename T>
@@ -31,7 +42,6 @@ struct TaskAwaiter {
     return task->GetResult();
   }
 };
-
 
 // Specialization for TaskAwaiter<void> - maintains existing behavior
 template <>

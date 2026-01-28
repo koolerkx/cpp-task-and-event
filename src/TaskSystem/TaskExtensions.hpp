@@ -1,3 +1,13 @@
+/**
+ * @file TaskExtensions.hpp
+ * @brief Extension helpers: cancellation, timeout, and polling variants for tasks.
+ * @details Provides WithCancellation, WithTimeout, and WithPollingCancellation helpers to adapt work into cancellable tasks.
+ * @note WithTimeout returns an out CancellationTokenPtr if requested
+ *
+ * @code{.cpp}
+ * auto t = WithCancellation([]() { return 1; }, MakeCancellationToken());
+ * @endcode
+ */
 #pragma once
 
 #include <chrono>

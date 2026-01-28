@@ -1,3 +1,10 @@
+/**
+ * @file CoroTask.hpp
+ * @brief Minimal coroutine wrapper that supports waiting and exception propagation.
+ * @details Defines a simple coroutine task type that allows waiting for completion and rethrowing exceptions.
+ * @note final_suspend notifies waiting threads
+ */
+
 #pragma once
 
 #include <condition_variable>

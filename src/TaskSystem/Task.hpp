@@ -1,3 +1,11 @@
+/**
+ * @file Task.hpp
+ * @brief Task-based continuation primitives supporting success and failure continuations.
+ * @details Defines Task<T> and Task<void> types with continuation support via `Then` (conditional on success) and `Finally`
+ * (unconditional), exception propagation, and result retrieval.
+ * @note Use `Then` for conditional continuations and `Finally` for unconditional continuations
+ */
+
 #pragma once
 
 #include <atomic>

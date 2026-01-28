@@ -1,3 +1,15 @@
+/**
+ * @file ThreadPool.hpp
+ * @brief Simple fixed-size thread pool for enqueuing work.
+ * @details Creates worker threads that process tasks from an internal queue and supports graceful shutdown in destructor.
+ * @note Default thread count is `hardware_concurrency() - 1` (at least one)
+ *
+ * @code{.cpp}
+ * ThreadPool pool(4);
+ * pool.Enqueue([](){});
+ * @endcode
+ */
+
 #pragma once
 
 #include <condition_variable>

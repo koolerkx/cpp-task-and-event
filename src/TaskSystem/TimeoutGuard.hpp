@@ -1,3 +1,16 @@
+/**
+ * @file TimeoutGuard.hpp
+ * @brief RAII guard that cancels a token after a timeout.
+ * @details Starts a background timer thread that cancels the provided CancellationTokenPtr when the timeout elapses; stops timer on
+ * destruction.
+ * @note The guard joins its timer thread on destruction to ensure no background work remains
+ *
+ * @code{.cpp}
+ * auto token = MakeCancellationToken();
+ * TimeoutGuard guard(token, std::chrono::seconds(1));
+ * @endcode
+ */
+
 #pragma once
 
 #include <atomic>
