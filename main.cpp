@@ -24,6 +24,10 @@ namespace EventScopeDemo {
 void RunAll();
 }
 
+namespace PublishAsyncDemo {
+void RunAll();
+}
+
 int main() {
   RunAllDemo();
   RunAllCoroutineDemos();
@@ -35,5 +39,6 @@ int main() {
   TypeSafeEventDemo::RunAll();
   CollisionFilterDemo::RunAll();
   EventScopeDemo::RunAll();
+  PublishAsyncDemo::RunAll();
   return 0;
 }

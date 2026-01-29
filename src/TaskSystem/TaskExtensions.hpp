@@ -1,20 +1,24 @@
 /**
  * @file TaskExtensions.hpp
- * @brief Extension helpers: cancellation, timeout, and polling variants for tasks.
- * @details Provides WithCancellation, WithTimeout, and WithPollingCancellation helpers to adapt work into cancellable tasks.
+ * @brief Extension helpers: cancellation, timeout, polling variants, and task composition.
+ * @details Provides WithCancellation, WithTimeout, WithPollingCancellation helpers to adapt work into cancellable tasks,
+ *          and WhenAll for aggregating multiple tasks.
  * @note WithTimeout returns an out CancellationTokenPtr if requested
  *
  * @code{.cpp}
  * auto t = WithCancellation([]() { return 1; }, MakeCancellationToken());
+ * auto aggregated = WhenAll(pool, {task1, task2, task3});
  * @endcode
  */
 #pragma once
 
 #include <chrono>
 #include <memory>
+#include <vector>
 
 #include "CancellationToken.hpp"
 #include "Task.hpp"
+#include "ThreadPool.hpp"
 #include "TimeoutGuard.hpp"
 
 template <typename T>
@@ -75,4 +79,55 @@ std::shared_ptr<Task<T>> WithPollingCancellation(std::function<T(CancellationTok
 template <>
 inline std::shared_ptr<Task<void>> WithPollingCancellation(std::function<void(CancellationTokenPtr)> work, CancellationTokenPtr token) {
   return std::make_shared<Task<void>>([work = std::move(work), token]() { work(token); });
+}
+
+inline std::shared_ptr<Task<void>> WhenAll(ThreadPool& pool, std::vector<std::shared_ptr<Task<void>>> tasks) {
+  if (tasks.empty()) {
+    auto empty_task = std::make_shared<Task<void>>([]() {});
+    empty_task->TrySchedule(pool);
+    return empty_task;
+  }
+
+  auto aggregate_task = std::make_shared<Task<void>>([]() {});
+
+  for (auto& task : tasks) {
+    task->Then(aggregate_task);
+  }
+
+  for (auto& task : tasks) {
+    task->TrySchedule(pool);
+  }
+
+  return aggregate_task;
+}
+
+inline std::shared_ptr<Task<void>> WhenAllWithCancellation(
+  ThreadPool& pool, std::vector<std::shared_ptr<Task<void>>> tasks, CancellationTokenPtr token) {
+  if (token && token->IsCancelled()) {
+    auto cancelled_task = std::make_shared<Task<void>>([]() { throw TaskCancelledException(); });
+    cancelled_task->TrySchedule(pool);
+    return cancelled_task;
+  }
+
+  if (tasks.empty()) {
+    auto empty_task = std::make_shared<Task<void>>([]() {});
+    empty_task->TrySchedule(pool);
+    return empty_task;
+  }
+
+  auto aggregate_task = std::make_shared<Task<void>>([token]() {
+    if (token && token->IsCancelled()) {
+      throw TaskCancelledException();
+    }
+  });
+
+  for (auto& task : tasks) {
+    task->Then(aggregate_task);
+  }
+
+  for (auto& task : tasks) {
+    task->TrySchedule(pool);
+  }
+
+  return aggregate_task;
 }

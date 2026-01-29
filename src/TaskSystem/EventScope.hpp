@@ -121,6 +121,10 @@ class EventScope {
     return token_ && token_->IsCancelled();
   }
 
+  CancellationTokenPtr GetToken() const {
+    return token_;
+  }
+
   EventScope(const EventScope&) = delete;
   EventScope& operator=(const EventScope&) = delete;
 

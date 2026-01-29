@@ -40,10 +40,13 @@
 #include <optional>
 #include <typeindex>
 #include <unordered_map>
+#include <vector>
 
 #include "CancellationToken.hpp"
 #include "Event.hpp"
 #include "SubjectID.hpp"
+#include "Task.hpp"
+#include "TaskExtensions.hpp"
 #include "ThreadPool.hpp"
 
 class EventBus;
@@ -278,6 +281,24 @@ class EventBus : public std::enable_shared_from_this<EventBus> {
     }
   }
 
+  /**
+   * @brief Publishes event asynchronously and returns awaitable task
+   */
+  template <typename E>
+    requires EventType<E>
+  std::shared_ptr<Task<void>> PublishAsync(const E& event) {
+    return PublishAsyncImpl(event, nullptr);
+  }
+
+  /**
+   * @brief Publishes event asynchronously with cancellation support
+   */
+  template <typename E>
+    requires EventType<E>
+  std::shared_ptr<Task<void>> PublishAsync(const E& event, CancellationTokenPtr token) {
+    return PublishAsyncImpl(event, token);
+  }
+
   template <typename E>
     requires EventType<E>
   EventHandle Subscribe(std::function<void(const E&)> handler) {
@@ -321,6 +342,56 @@ class EventBus : public std::enable_shared_from_this<EventBus> {
 
   void Unsubscribe(std::type_index event_type, uint64_t handler_id);
   void UnsubscribeTargeted(std::type_index event_type, SubjectID target, uint64_t handler_id);
+
+  template <typename E>
+    requires EventType<E>
+  std::shared_ptr<Task<void>> PublishAsyncImpl(const E& event, CancellationTokenPtr token) {
+    if (token && token->IsCancelled()) {
+      auto cancelled_task = std::make_shared<Task<void>>([]() { throw TaskCancelledException(); });
+      cancelled_task->TrySchedule(pool_);
+      return cancelled_task;
+    }
+
+    std::type_index type_id(typeid(E));
+    std::vector<TypeErasedHandler> handlers_snapshot;
+
+    {
+      std::unique_lock<std::mutex> lock(handlers_mutex_);
+      auto event_it = event_handlers_.find(type_id);
+      if (event_it != event_handlers_.end()) {
+        handlers_snapshot.reserve(event_it->second.size());
+        for (const auto& [id, handler] : event_it->second) {
+          handlers_snapshot.push_back(handler);
+        }
+      }
+    }
+
+    if (handlers_snapshot.empty()) {
+      auto empty_task = std::make_shared<Task<void>>([]() {});
+      empty_task->TrySchedule(pool_);
+      return empty_task;
+    }
+
+    auto event_copy = std::make_shared<E>(event);
+    std::vector<std::shared_ptr<Task<void>>> handler_tasks;
+    handler_tasks.reserve(handlers_snapshot.size());
+
+    for (auto& handler : handlers_snapshot) {
+      auto task = std::make_shared<Task<void>>([handler, event_copy, token]() {
+        if (token && token->IsCancelled()) {
+          return;
+        }
+        handler(event_copy.get());
+      });
+      handler_tasks.push_back(task);
+    }
+
+    if (token) {
+      return WhenAllWithCancellation(pool_, handler_tasks, token);
+    } else {
+      return WhenAll(pool_, handler_tasks);
+    }
+  }
 
   ThreadPool& pool_;
   uint64_t next_handler_id_{0};

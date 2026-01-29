@@ -53,6 +53,7 @@ add_executable(app
   src/Demo/TypeSafeEventDemo.cpp
   src/Demo/CollisionFilterDemo.cpp
   src/Demo/EventScopeDemo.cpp
+  src/Demo/PublishAsyncDemo.cpp
 )
 
 target_include_directories(app PRIVATE
