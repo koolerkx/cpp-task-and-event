@@ -40,6 +40,7 @@ add_executable(app
   src/TaskSystem/Event.hpp
   src/TaskSystem/EventBus.hpp
   src/TaskSystem/EventBus.cpp
+  src/TaskSystem/SubjectID.hpp
   src/Demo/Events.hpp
   src/Demo/Demo.cpp
   src/Demo/CoroutineDemo.cpp
@@ -49,6 +50,7 @@ add_executable(app
   src/Demo/ThenSuccessDemo.cpp
   src/Demo/EventBusDemo.cpp
   src/Demo/TypeSafeEventDemo.cpp
+  src/Demo/CollisionFilterDemo.cpp
 )
 
 target_include_directories(app PRIVATE

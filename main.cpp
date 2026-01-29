@@ -16,6 +16,10 @@ namespace TypeSafeEventDemo {
 void RunAll();
 }
 
+namespace CollisionFilterDemo {
+void RunAll();
+}
+
 int main() {
   RunAllDemo();
   RunAllCoroutineDemos();
@@ -25,5 +29,6 @@ int main() {
   ThenSuccessDemo::RunAll();
   EventBusDemo::RunAll();
   TypeSafeEventDemo::RunAll();
+  CollisionFilterDemo::RunAll();
   return 0;
 }
